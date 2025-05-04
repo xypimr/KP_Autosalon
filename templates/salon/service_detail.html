@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Заказ №{{ service.pk }}</h1>
+  <dl class="row">
+    <dt class="col-sm-3">Автомобиль</dt><dd class="col-sm-9">{{ service.car }}</dd>
+    <dt class="col-sm-3">Клиент</dt><dd class="col-sm-9">{{ service.customer }}</dd>
+    <dt class="col-sm-3">Дата</dt><dd class="col-sm-9">{{ service.service_date|date:"Y-m-d H:i" }}</dd>
+    <dt class="col-sm-3">Описание</dt><dd class="col-sm-9">{{ service.description }}</dd>
+    <dt class="col-sm-3">Стоимость</dt><dd class="col-sm-9">{{ service.cost }}</dd>
+  </dl>
+  <a class="btn btn-secondary" href="{% url 'service_list' %}">Назад</a>
+  {% if perms.salon.change_service %}
+    <a class="btn btn-warning" href="{% url 'service_edit' service.pk %}">Изменить</a>
+  {% endif %}
+  {% if perms.salon.delete_service %}
+    <a class="btn btn-danger" href="{% url 'service_delete' service.pk %}">Удалить</a>
+  {% endif %}
+{% endblock %}

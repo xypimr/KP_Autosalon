@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Продажи</h1>
+  {% if perms.salon.add_sale %}
+    <a class="btn btn-primary mb-3" href="{% url 'sale_add' %}">Добавить продажу</a>
+  {% endif %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Автомобиль</th><th>Клиент</th><th>Сотрудник</th><th>Дата</th><th>Сумма</th><th>Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sale in sales %}
+      <tr>
+        <td>{{ sale.car }}</td>
+        <td>{{ sale.customer }}</td>
+        <td>{{ sale.employee }}</td>
+        <td>{{ sale.sale_date|date:"Y-m-d H:i" }}</td>
+        <td>{{ sale.amount }}</td>
+        <td>
+          <a class="btn btn-sm btn-outline-info" href="{% url 'sale_detail' sale.pk %}">Просмотр</a>
+          {% if perms.salon.change_sale %}
+            <a class="btn btn-sm btn-outline-warning" href="{% url 'sale_edit' sale.pk %}">Изменить</a>
+          {% endif %}
+          {% if perms.salon.delete_sale %}
+            <a class="btn btn-sm btn-outline-danger" href="{% url 'sale_delete' sale.pk %}">Удалить</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">Нет записей о продажах</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

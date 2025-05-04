@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Добро пожаловать в систему «Автосалон»</h1>
+  <p>Вы можете перейти на страницы:</p>
+  <ul>
+    <li><a href="{% url 'customer_list' %}">Клиенты</a></li>
+    <li><a href="{% url 'car_list' %}">Автомобили</a></li>
+    <li><a href="{% url 'sale_list' %}">Продажи</a></li>
+    <li><a href="{% url 'service_list' %}">Сервисные заказы</a></li>
+  </ul>
+{% endblock %}

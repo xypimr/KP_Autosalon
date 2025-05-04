@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Удалить продажу</h1>
+  <p>Вы уверены, что хотите удалить запись о продаже автомобиля «{{ object.car }}» клиенту «{{ object.customer }}»?</p>
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">Да, удалить</button>
+    <a class="btn btn-secondary" href="{% url 'sale_list' %}">Отмена</a>
+  </form>
+{% endblock %}
