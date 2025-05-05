@@ -76,6 +76,14 @@ class Sale(models.Model):
 class Service(models.Model):
     car = models.ForeignKey(Car, on_delete=models.PROTECT, related_name='services')
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name='services')
+    employee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='services_created',
+        verbose_name='Сотрудник',
+       # null = True,  # временно разрешаем NULL
+       # blank = True
+    )
     description = models.TextField('Описание работ')
     cost = models.DecimalField('Стоимость', max_digits=10, decimal_places=2)
     service_date = models.DateTimeField('Дата обслуживания', auto_now_add=True)
@@ -87,7 +95,7 @@ class Service(models.Model):
         ]
 
     def __str__(self):
-        return f'Сервис {self.car} для {self.customer}'
+        return f"Сервис {self.pk} – {self.car} для {self.customer}"
 
 class AccessLog(models.Model):
     user = models.ForeignKey(

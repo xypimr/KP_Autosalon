@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Клиент: {{ customer.full_name }}</h1>
+  <dl class="row">
+    <dt class="col-sm-3">ФИО</dt><dd class="col-sm-9">{{ customer.full_name }}</dd>
+    <dt class="col-sm-3">Email</dt><dd class="col-sm-9">{{ customer.email }}</dd>
+    <dt class="col-sm-3">Телефон</dt><dd class="col-sm-9">{{ customer.phone }}</dd>
+    {% if customer.passport_number %}
+      <dt class="col-sm-3">№ паспорта</dt>
+      <dd class="col-sm-9">{{ customer.passport_number }}</dd>
+    {% endif %}
+  </dl>
+  <a class="btn btn-secondary" href="{% url 'customer_list' %}">Назад</a>
+  {% if perms.salon.change_customer %}
+    <a class="btn btn-warning" href="{% url 'customer_edit' customer.pk %}">Изменить</a>
+  {% endif %}
+  {% if perms.salon.delete_customer %}
+    <a class="btn btn-danger" href="{% url 'customer_delete' customer.pk %}">Удалить</a>
+  {% endif %}
+{% endblock %}

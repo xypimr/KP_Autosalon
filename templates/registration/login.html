@@ -1,9 +1,42 @@
 {% extends "base.html" %}
+
+{% block title %}Вход — Автосалон{% endblock %}
+
 {% block content %}
-<h2>Вход в систему</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Войти</button>
-</form>
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+  <div class="card shadow-sm" style="max-width: 400px; width: 100%;">
+    <div class="card-header bg-primary text-white text-center">
+      <h4 class="mb-0">Вход в систему</h4>
+    </div>
+    <div class="card-body">
+      {% if form.errors %}
+        <div class="alert alert-danger">
+          Неверное имя пользователя или пароль.
+        </div>
+      {% endif %}
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="id_username" class="form-label">Имя пользователя</label>
+          <input type="text" name="username" autofocus required id="id_username"
+                 class="form-control" placeholder="Введите имя пользователя">
+        </div>
+        <div class="mb-3">
+          <label for="id_password" class="form-label">Пароль</label>
+          <input type="password" name="password" required id="id_password"
+                 class="form-control" placeholder="Введите пароль">
+        </div>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary">Войти</button>
+        </div>
+      </form>
+    </div>
+    <div class="card-footer text-center">
+      <small class="text-muted">
+        Забыли пароль? 
+        <a href="{% url 'password_reset' %}" class="link-primary">Восстановить</a>
+      </small>
+    </div>
+  </div>
+</div>
 {% endblock %}

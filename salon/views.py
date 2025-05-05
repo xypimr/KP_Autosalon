@@ -118,10 +118,19 @@ class ServiceListView(LoginRequiredMixin, ListView):
     template_name = 'salon/service_list.html'
     context_object_name = 'services'
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # Если у пользователя нет права смотреть все сервисы — показываем только свои
+        if not self.request.user.has_perm('salon.view_all_services'):
+            return qs.filter(employee=self.request.user)
+        return qs
+
 class ServiceDetailView(LoginRequiredMixin, DetailView):
     model = Service
     template_name = 'salon/service_detail.html'
     context_object_name = 'service'
+
+# salon/views.py
 
 class ServiceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Service
@@ -129,6 +138,11 @@ class ServiceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     template_name = 'salon/service_form.html'
     success_url = reverse_lazy('service_list')
     permission_required = 'salon.add_service'
+
+    def form_valid(self, form):
+        form.instance.employee = self.request.user
+        return super().form_valid(form)
+
 
 class ServiceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Service

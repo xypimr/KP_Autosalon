@@ -1,11 +1,18 @@
 {% extends "base.html" %}
+{% block title %}Главная — Автосалон{% endblock %}
+
 {% block content %}
-  <h1>Добро пожаловать в систему «Автосалон»</h1>
-  <p>Вы можете перейти на страницы:</p>
-  <ul>
-    <li><a href="{% url 'customer_list' %}">Клиенты</a></li>
-    <li><a href="{% url 'car_list' %}">Автомобили</a></li>
-    <li><a href="{% url 'sale_list' %}">Продажи</a></li>
-    <li><a href="{% url 'service_list' %}">Сервисные заказы</a></li>
-  </ul>
+<div class="text-center py-5">
+  <h1 class="display-4 mb-3">Добро пожаловать в «Автосалон»</h1>
+  <p class="lead mb-4">Управление клиентами, автомобилями, продажами и сервисными заказами в одном интерфейсе.</p>
+  <div class="d-flex justify-content-center gap-3 flex-wrap">
+    <a class="btn btn-primary btn-lg" href="{% url 'customer_list' %}">Клиенты</a>
+    <a class="btn btn-secondary btn-lg" href="{% url 'car_list' %}">Автомобили</a>
+    <a class="btn btn-success btn-lg" href="{% url 'sale_list' %}">Продажи</a>
+    <a class="btn btn-warning btn-lg" href="{% url 'service_list' %}">Сервис</a>
+    {% if user.is_superuser %}
+      <a class="btn btn-dark btn-lg" href="{% url 'admin:index' %}">Админка</a>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}
