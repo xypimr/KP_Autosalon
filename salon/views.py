@@ -1,11 +1,13 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db.models import F
 from django.urls import reverse_lazy
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView
 )
 
 from .forms import ServicePartFormSet, PartForm
-from .models import Customer, Car, Sale, Service
+from .models import Customer, Car, Sale, Service, ServicePart
+
 
 # 1.1. Клиенты
 class CustomerListView(LoginRequiredMixin, ListView):
@@ -141,34 +143,71 @@ class ServiceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     success_url = reverse_lazy('service_list')
     permission_required = 'salon.add_service'
 
-    def get(self, request, *args, **kwargs):
-        # Пустая основная форма и пустой formset
-        self.object = None
-        form = self.get_form()
-        formset = ServicePartFormSet()
-        return self.render_to_response(self.get_context_data(form=form, formset=formset))
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        # Для создания у нас self.object ещё не сохранён, но formset нужен пустой
+        if 'formset' not in data:
+            data['formset'] = ServicePartFormSet(
+                instance=None,
+                prefix='service_parts'
+            )
+        return data
 
     def post(self, request, *args, **kwargs):
-        # Получаем данные из POST
-        self.object = None
         form = self.get_form()
-        formset = ServicePartFormSet(request.POST)
+        # При POST обязательно передаём тот же prefix
+        formset = ServicePartFormSet(
+            request.POST,
+            instance=None,
+            prefix='service_parts'
+        )
+
         if form.is_valid() and formset.is_valid():
             return self.form_valid_with_parts(form, formset)
-        return self.form_invalid(form, formset)
+
+        # Диагностика ошибок в шаблоне
+        return self.render_to_response(
+            self.get_context_data(form=form, formset=formset)
+        )
 
     def form_valid_with_parts(self, form, formset):
-        # Сохраняем Service и присваиваем employee
         service = form.save(commit=False)
         service.employee = self.request.user
         service.save()
-        # Сохраняем все inline-запчасти
-        formset.instance = service
-        formset.save()
-        return redirect(self.success_url)
 
-    def form_invalid(self, form, formset):
-        return self.render_to_response(self.get_context_data(form=form, formset=formset))
+        # 1) Обрабатываем новые и обновлённые ServicePart
+        for subform in formset:
+            cd = subform.cleaned_data
+            if not cd or cd.get('DELETE') or cd.get('part') is None:
+                continue
+
+            # Если подформа редактирует существующую запись — получаем старое количество
+            if subform.instance.pk:
+                old_sp = ServicePart.objects.get(pk=subform.instance.pk)
+                old_qty = old_sp.quantity
+            else:
+                old_qty = 0
+
+            # Сохраняем новую версию записи
+            sp = subform.save(commit=False)
+            sp.service = service
+            sp.save()
+
+            # Вычисляем изменение количества
+            new_qty = sp.quantity
+            delta = new_qty - old_qty
+
+            # Если delta>0 — списываем со склада; если <0 — восстанавливаем
+            Part.objects.filter(pk=sp.part_id).update(stock=F('stock') - delta)
+
+        # 2) Удаляем те записи, которые помечены на удаление, и восстанавливаем остаток
+        for del_form in formset.deleted_forms:
+            old = del_form.instance
+            if old.pk:
+                Part.objects.filter(pk=old.part_id).update(stock=F('stock') + old.quantity)
+                old.delete()
+
+        return redirect(self.success_url)
 
 
 class ServiceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
@@ -178,32 +217,71 @@ class ServiceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
     success_url = reverse_lazy('service_list')
     permission_required = 'salon.change_service'
 
-    def get(self, request, *args, **kwargs):
-        # Загружаем объект и формируем формы
-        self.object = self.get_object()
-        form = self.get_form()
-        formset = ServicePartFormSet(instance=self.object)
-        return self.render_to_response(self.get_context_data(form=form, formset=formset))
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        # При редактировании передаём существующий instance
+        if 'formset' not in data:
+            data['formset'] = ServicePartFormSet(
+                instance=self.object,
+                prefix='service_parts'
+            )
+        return data
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
-        formset = ServicePartFormSet(request.POST, instance=self.object)
+        formset = ServicePartFormSet(
+            request.POST,
+            instance=self.object,
+            prefix='service_parts'
+        )
+
         if form.is_valid() and formset.is_valid():
             return self.form_valid_with_parts(form, formset)
-        return self.form_invalid(form, formset)
+
+        return self.render_to_response(
+            self.get_context_data(form=form, formset=formset)
+        )
 
     def form_valid_with_parts(self, form, formset):
-        # Сохраняем основные данные
-        service = form.save()
-        # Сохраняем inline-части
-        formset.instance = service
-        formset.save()
+        service = form.save(commit=False)
+        service.employee = self.request.user
+        service.save()
+
+        # 1) Обрабатываем новые и обновлённые ServicePart
+        for subform in formset:
+            cd = subform.cleaned_data
+            if not cd or cd.get('DELETE') or cd.get('part') is None:
+                continue
+
+            # Если подформа редактирует существующую запись — получаем старое количество
+            if subform.instance.pk:
+                old_sp = ServicePart.objects.get(pk=subform.instance.pk)
+                old_qty = old_sp.quantity
+            else:
+                old_qty = 0
+
+            # Сохраняем новую версию записи
+            sp = subform.save(commit=False)
+            sp.service = service
+            sp.save()
+
+            # Вычисляем изменение количества
+            new_qty = sp.quantity
+            delta = new_qty - old_qty
+
+            # Если delta>0 — списываем со склада; если <0 — восстанавливаем
+            Part.objects.filter(pk=sp.part_id).update(stock=F('stock') - delta)
+
+        # 2) Удаляем те записи, которые помечены на удаление, и восстанавливаем остаток
+        for del_form in formset.deleted_forms:
+            old = del_form.instance
+            if old.pk:
+                Part.objects.filter(pk=old.part_id).update(stock=F('stock') + old.quantity)
+                old.delete()
+
         return redirect(self.success_url)
 
-    def form_invalid(self, form, formset):
-        # При ошибках в формах рендерим страницу с теми же данными
-        return self.render_to_response(self.get_context_data(form=form, formset=formset))
 
 class ServiceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Service

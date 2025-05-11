@@ -6,7 +6,7 @@ ServicePartFormSet = inlineformset_factory(
     Service,
     ServicePart,
     fields=('part', 'quantity'),
-    extra=1,
+    extra=5,
     can_delete=True
 )
 

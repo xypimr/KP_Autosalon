@@ -8,16 +8,29 @@
     {{ formset.management_form }}
     <table class="table">
       {% for subform in formset %}
-        <tr>
-          <td>{{ subform.part.label_tag }} {{ subform.part }}</td>
-          <td>{{ subform.quantity.label_tag }} {{ subform.quantity }}</td>
-          <td>
-            {% if subform.instance.pk %}
-              {{ subform.DELETE }} <label>Удалить</label>
-            {% endif %}
-          </td>
-        </tr>
-      {% endfor %}
+  {# Сначала выводим hidden-поля: id и DELETE #}
+  {% for hidden in subform.hidden_fields %}
+    {{ hidden }}
+  {% endfor %}
+  <div class="d-flex align-items-center mb-2">
+    <div class="me-3">
+      {{ subform.part.label_tag }}
+      {{ subform.part }}
+      {{ subform.part.errors }}
+    </div>
+    <div class="me-3">
+      {{ subform.quantity.label_tag }}
+      {{ subform.quantity }}
+      {{ subform.quantity.errors }}
+    </div>
+    <div>
+      {# checkbox для удаления, уже скрытое поле DELETE от hidden_fields #}
+      {% if subform.instance.pk %}
+        {{ subform.DELETE }} <label>Удалить</label>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
     </table>
     <button type="submit" class="btn btn-success">Сохранить</button>
     <a class="btn btn-secondary" href="{% url 'service_list' %}">Отмена</a>
