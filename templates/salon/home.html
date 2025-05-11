@@ -4,14 +4,39 @@
 {% block content %}
 <div class="text-center py-5">
   <h1 class="display-4 mb-3">Добро пожаловать в «Автосалон»</h1>
-  <p class="lead mb-4">Управление клиентами, автомобилями, продажами и сервисными заказами в одном интерфейсе.</p>
-  <div class="d-flex justify-content-center gap-3 flex-wrap">
-    <a class="btn btn-primary btn-lg" href="{% url 'customer_list' %}">Клиенты</a>
-    <a class="btn btn-secondary btn-lg" href="{% url 'car_list' %}">Автомобили</a>
-    <a class="btn btn-success btn-lg" href="{% url 'sale_list' %}">Продажи</a>
-    <a class="btn btn-warning btn-lg" href="{% url 'service_list' %}">Сервис</a>
+  <p class="lead mb-4">Управление клиентами, автомобилями, продажами и сервисными заказами.</p>
+  <div class="d-flex justify-content-center gap-4 flex-wrap">
+    <a class="btn btn-outline-primary btn-lg d-flex flex-column align-items-center"
+       href="{% url 'customer_list' %}">
+      <i class="bi bi-people-fill display-1"></i>
+      <span>Клиенты</span>
+    </a>
+    <a class="btn btn-outline-primary btn-lg d-flex flex-column align-items-center"
+       href="{% url 'car_list' %}">
+      <i class="bi bi-car-front-fill display-1"></i>
+      <span>Автомобили</span>
+    </a>
+    <a class="btn btn-outline-primary btn-lg d-flex flex-column align-items-center"
+       href="{% url 'sale_list' %}">
+      <i class="bi bi-cash-stack display-1"></i>
+      <span>Продажи</span>
+    </a>
+    <a class="btn btn-outline-primary btn-lg d-flex flex-column align-items-center"
+       href="{% url 'service_list' %}">
+      <i class="bi bi-tools display-1"></i>
+      <span>Сервис</span>
+    </a>
+    <a class="btn btn-outline-primary btn-lg d-flex flex-column align-items-center"
+       href="{% url 'part_list' %}">
+      <i class="bi bi-box-seam display-1"></i>
+      <span>Склад</span>
+    </a>
     {% if user.is_superuser %}
-      <a class="btn btn-dark btn-lg" href="{% url 'admin:index' %}">Админка</a>
+      <a class="btn btn-outline-primary btn-lg d-flex flex-column align-items-center"
+         href="{% url 'admin:index' %}">
+        <i class="bi bi-shield-lock-fill display-1"></i>
+        <span>Админка</span>
+      </a>
     {% endif %}
   </div>
 </div>

@@ -3,6 +3,8 @@ from django.urls import reverse_lazy
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView
 )
+
+from .forms import ServicePartFormSet, PartForm
 from .models import Customer, Car, Sale, Service
 
 # 1.1. Клиенты
@@ -139,9 +141,34 @@ class ServiceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     success_url = reverse_lazy('service_list')
     permission_required = 'salon.add_service'
 
-    def form_valid(self, form):
-        form.instance.employee = self.request.user
-        return super().form_valid(form)
+    def get(self, request, *args, **kwargs):
+        # Пустая основная форма и пустой formset
+        self.object = None
+        form = self.get_form()
+        formset = ServicePartFormSet()
+        return self.render_to_response(self.get_context_data(form=form, formset=formset))
+
+    def post(self, request, *args, **kwargs):
+        # Получаем данные из POST
+        self.object = None
+        form = self.get_form()
+        formset = ServicePartFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            return self.form_valid_with_parts(form, formset)
+        return self.form_invalid(form, formset)
+
+    def form_valid_with_parts(self, form, formset):
+        # Сохраняем Service и присваиваем employee
+        service = form.save(commit=False)
+        service.employee = self.request.user
+        service.save()
+        # Сохраняем все inline-запчасти
+        formset.instance = service
+        formset.save()
+        return redirect(self.success_url)
+
+    def form_invalid(self, form, formset):
+        return self.render_to_response(self.get_context_data(form=form, formset=formset))
 
 
 class ServiceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
@@ -151,14 +178,75 @@ class ServiceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
     success_url = reverse_lazy('service_list')
     permission_required = 'salon.change_service'
 
+    def get(self, request, *args, **kwargs):
+        # Загружаем объект и формируем формы
+        self.object = self.get_object()
+        form = self.get_form()
+        formset = ServicePartFormSet(instance=self.object)
+        return self.render_to_response(self.get_context_data(form=form, formset=formset))
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        formset = ServicePartFormSet(request.POST, instance=self.object)
+        if form.is_valid() and formset.is_valid():
+            return self.form_valid_with_parts(form, formset)
+        return self.form_invalid(form, formset)
+
+    def form_valid_with_parts(self, form, formset):
+        # Сохраняем основные данные
+        service = form.save()
+        # Сохраняем inline-части
+        formset.instance = service
+        formset.save()
+        return redirect(self.success_url)
+
+    def form_invalid(self, form, formset):
+        # При ошибках в формах рендерим страницу с теми же данными
+        return self.render_to_response(self.get_context_data(form=form, formset=formset))
+
 class ServiceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Service
     template_name = 'salon/service_confirm_delete.html'
     success_url = reverse_lazy('service_list')
     permission_required = 'salon.delete_service'
 
+from .models import Part
 
-from django.shortcuts import render
+class PartListView(LoginRequiredMixin, ListView):
+    model = Part
+    template_name = 'salon/part_list.html'
+    context_object_name = 'parts'
+    permission_required = 'salon.view_part'
+
+class PartDetailView(LoginRequiredMixin, DetailView):
+    model = Part
+    template_name = 'salon/part_detail.html'
+    permission_required = 'salon.view_part'
+
+class PartCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = Part
+    form_class = PartForm
+    template_name = 'salon/part_form.html'
+    success_url = reverse_lazy('part_list')
+    permission_required = 'salon.add_part'
+
+class PartUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = Part
+    form_class = PartForm
+    template_name = 'salon/part_form.html'
+    success_url = reverse_lazy('part_list')
+    permission_required = 'salon.change_part'
+
+class PartDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = Part
+    template_name = 'salon/part_confirm_delete.html'
+    success_url = reverse_lazy('part_list')
+    permission_required = 'salon.delete_part'
+
+
+from django.shortcuts import render, redirect
+
 
 def home(request):
     return render(request, 'salon/home.html')

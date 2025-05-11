@@ -112,3 +112,55 @@ class AccessLog(models.Model):
 
     def __str__(self):
         return f'{self.timestamp}: {self.user} -> {self.path} [{self.status_code}]'
+
+
+from django.db import models
+from django.conf import settings
+
+class Part(models.Model):
+    """
+    Справочник запчастей.
+    """
+    part_number = models.CharField('Артикул', max_length=50, unique=True)
+    name = models.CharField('Наименование', max_length=200)
+    cost = models.DecimalField('Цена за единицу', max_digits=10, decimal_places=2)
+    stock = models.PositiveIntegerField('Остаток на складе')
+
+    class Meta:
+        verbose_name = 'Запчасть'
+        verbose_name_plural = 'Запчасти'
+        permissions = [
+            ('view_all_parts', 'Can view all parts'),
+            ('edit_part', 'Can edit parts'),
+        ]
+
+    def __str__(self):
+        return f'{self.part_number} — {self.name}'
+
+
+class ServicePart(models.Model):
+    """
+    Через эту таблицу фиксируем, какие запчасти и в каком количестве
+    используются в каждом сервисном заказе.
+    """
+    service = models.ForeignKey(
+        'Service',
+        on_delete=models.CASCADE,
+        related_name='service_parts',
+        verbose_name='Сервисный заказ'
+    )
+    part = models.ForeignKey(
+        Part,
+        on_delete=models.PROTECT,
+        related_name='service_parts',
+        verbose_name='Запчасть'
+    )
+    quantity = models.PositiveIntegerField('Количество', default=1)
+
+    class Meta:
+        verbose_name = 'Запчасть в заказе'
+        verbose_name_plural = 'Запчасти в заказах'
+        unique_together = ('service', 'part')
+
+    def __str__(self):
+        return f'{self.part} × {self.quantity}'

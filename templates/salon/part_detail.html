@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Запчасть {{ object.part_number }} — Автосалон{% endblock %}
+
+{% block content %}
+  <h1>Запчасть: {{ object.name }}</h1>
+  <dl class="row">
+    <dt class="col-sm-3">Артикул</dt><dd class="col-sm-9">{{ object.part_number }}</dd>
+    <dt class="col-sm-3">Наименование</dt><dd class="col-sm-9">{{ object.name }}</dd>
+    <dt class="col-sm-3">Цена за единицу</dt><dd class="col-sm-9">{{ object.cost }}</dd>
+    <dt class="col-sm-3">Остаток</dt><dd class="col-sm-9">{{ object.stock }}</dd>
+  </dl>
+  <div class="d-flex gap-2">
+    <a href="{% url 'part_list' %}" class="btn btn-secondary">Назад к списку</a>
+    {% if perms.salon.change_part %}
+      <a href="{% url 'part_edit' object.pk %}" class="btn btn-warning">Редактировать</a>
+    {% endif %}
+    {% if perms.salon.delete_part %}
+      <a href="{% url 'part_delete' object.pk %}" class="btn btn-danger">Удалить</a>
+    {% endif %}
+  </div>
+{% endblock %}

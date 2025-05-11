@@ -8,6 +8,30 @@
     <dt class="col-sm-3">Описание</dt><dd class="col-sm-9">{{ service.description }}</dd>
     <dt class="col-sm-3">Стоимость</dt><dd class="col-sm-9">{{ service.cost }}</dd>
   </dl>
+  <h2 class="mt-4">Использованные запчасти</h2>
+  {% if service.service_parts.all %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Артикул</th>
+          <th>Наименование</th>
+          <th>Количество</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sp in service.service_parts.all %}
+        <tr>
+          <td>{{ sp.part.part_number }}</td>
+          <td>{{ sp.part.name }}</td>
+          <td>{{ sp.quantity }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p><em>Запчасти не назначены.</em></p>
+  {% endif %}
+  <!-- Кнопки «назад», «редактировать» и т.п. -->
   <a class="btn btn-secondary" href="{% url 'service_list' %}">Назад</a>
   {% if perms.salon.change_service %}
     <a class="btn btn-warning" href="{% url 'service_edit' service.pk %}">Изменить</a>
