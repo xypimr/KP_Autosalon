@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
-from .views import home, PartListView, PartCreateView, PartUpdateView, PartDetailView, PartDeleteView
+from .views import home, PartListView, PartCreateView, PartUpdateView, PartDetailView, PartDeleteView, backup_db_view, \
+    download_latest_backup
 
 urlpatterns = [
     path('', home, name='home'),
@@ -37,4 +38,8 @@ urlpatterns = [
     path('parts/<int:pk>/', PartDetailView.as_view(), name='part_detail'),
     path('parts/<int:pk>/edit/', PartUpdateView.as_view(), name='part_edit'),
     path('parts/<int:pk>/delete/', PartDeleteView.as_view(), name='part_delete'),
+
+    path('backup-db/', backup_db_view, name='backup_db'),
+    path('backup-db/download/', download_latest_backup, name='download_latest_backup'),
+
 ]

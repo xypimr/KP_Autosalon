@@ -100,11 +100,12 @@ PASSWORD_HASHERS = [
 
 
 
-
-
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+BACKUP_DIR = BASE_DIR / 'backups'
+
 
 # Internationalization
 LANGUAGE_CODE = 'ru-ru'

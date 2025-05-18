@@ -1,6 +1,10 @@
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib import messages
+
+from django.core.management import call_command
 from django.db.models import F
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView
 )
@@ -324,6 +328,43 @@ class PartDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 
 from django.shortcuts import render, redirect
+
+@staff_member_required
+def backup_db_view(request):
+    """
+    Запускает команду backup_db и выводит результат.
+    Доступно только администраторам (is_staff).
+    """
+    try:
+        call_command('backup_db')
+        messages.success(request, 'Бекап базы данных успешно создан.')
+    except Exception as e:
+        messages.error(request, f'Не удалось создать бекап: {e}')
+    return redirect(request.GET.get('next', reverse('home')))
+
+import os, glob
+from django.http import FileResponse, Http404
+from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
+
+@staff_member_required
+def download_latest_backup(request):
+    """
+    Находит в BACKUP_DIR самый свежий файл и отдаёт его как attachment.
+    """
+    backup_dir = getattr(settings, 'BACKUP_DIR', os.path.join(settings.BASE_DIR, 'backups'))
+    pattern = os.path.join(backup_dir, 'backup_*.sql')
+    files = glob.glob(pattern)
+    if not files:
+        raise Http404("Файл бекапа не найден")
+    latest = max(files, key=os.path.getmtime)
+    filename = os.path.basename(latest)
+    try:
+        return FileResponse(open(latest, 'rb'),
+                            as_attachment=True,
+                            filename=filename)
+    except FileNotFoundError:
+        raise Http404("Файл бекапа удалён")
 
 
 def home(request):
